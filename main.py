@@ -16,10 +16,10 @@ def read_csv(file_path = "data.csv"):
     return data
 
 def add_position(price_now):
-    invest = 20.4
+    invest = 50
     global invested
     invested = invested + invest * 2
-    positions.append(Position(price_now, 0.2, 100, 20.4))
+    positions.append(Position(price_now, 0.2, 10, invest))
     for position in positions:
         position.eval(price_now)
 
