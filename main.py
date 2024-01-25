@@ -1,102 +1,98 @@
 from position import Position
+from strategy import Strategy
+import argparse
 import csv
+import concurrent.futures
+import threading
+from multiprocessing.dummy import Pool as ThreadPool
 
-positions = []
-invested = 0
+
 
 def read_csv(file_path = "data.csv"):
-    data = []
-    with open(file_path, 'r', newline=None, encoding='utf-8') as csvfile:
+    with open("data.csv", 'r', newline=None, encoding='utf-8') as csvfile:
         csv_reader = csv.reader(csvfile)
-        for row in csv_reader:
-            # Strip double quotes from each element and append to the data list
-            opened = float(row[1].strip('"'))
-            closed = float(row[4].strip('"'))
-            add_position((opened + closed) / 2)
-    return data
+        stock_data = list(csv_reader)
+        return stock_data
 
-def add_position(price_now):
-    invest = 50
-    global invested
-    invested = invested + invest * 2
-    positions.append(Position(price_now, 0.2, 10, invest))
-    for position in positions:
-        position.eval(price_now)
+def parse_stock_data_to_float_list(stock_data):
+    float_list = []
+    for entry in stock_data:
+        float_list.append(float(entry[1].strip('"')) + float(entry[4].strip('"')) / 2 )
+    return float_list
 
-def count_liquidated(mode):
-    count = 0
-    for position in positions:
-        if mode == "short" and position.short_liquidated:
-            count = count + 1
-        if mode == "long" and position.long_liquidated:
-            count = count + 1
-    return count
+def main():
+    # Create argument parser
+    parser = argparse.ArgumentParser(description="Process file path.")
+    
+    parser.add_argument("-p", "--path", type=str, help="Path to the file.")
+    parser.add_argument("-s", "--strategy", action="store_true", help="Get the best strategy")
+    
+    # Parse the arguments
+    args = parser.parse_args()
 
-def count_lost():
-    count = 0
-    for position in positions:
-        if position.short_liquidated and position.long_liquidated:
-            count = count + 1
-    return count
+    # print_file_path(args.path)
 
-def count_win():
-    count = 0
-    for position in positions:
-        if position.long_liquidated == False and position.short_liquidated == True and position.closed:
-            count = count + 1
-        if position.long_liquidated == True and position.short_liquidated == False and position.closed:
-            count = count + 1
-    return count
+    stock_data = read_csv(args.path)
 
-def get_balance():
-    balance = 0
-    for position in positions:
-        balance = balance + position.current_balance
-    return balance
+    calculate_all_strats(parse_stock_data_to_float_list(stock_data))
 
-def get_balance_from_sold():
-    balance = 0
-    for position in positions:
-        if position.closed:
-            balance = balance + position.balance
-    return balance
+counter = 0
+no_strats = 0
 
-def count_still_open():
-    count = 0
-    for position in positions:
-        if position.closed == False:
-            count = count + 1
-    return count
+def evaluate_strategy(strategy):
+    global counter
+    counter += 1
+    global no_strats
+    if counter % 200 == 0:
+        print(f"{counter} / {no_strats} - {round(counter / no_strats * 100, 2)} %")
+    strategy.evaluate_strategy()
 
+def calculate_all_strats(stock_data, invest=50, lower_leverage=2, higher_leverage=10, lower_stop_loss=0.1, higher_stop_loss=1, higher_sell_limit=0.7):
+    strategies = {}
+    global no_strats
+    no_strats = (higher_leverage - lower_leverage) * (higher_stop_loss - lower_stop_loss) * 20 * (higher_sell_limit - lower_stop_loss) * 50
+    counter = 0
 
+    for lev in range(lower_leverage, higher_leverage):
+        current_stop_l = lower_stop_loss
+        while current_stop_l <= higher_stop_loss:
+            current_sell_l = current_stop_l
+            while current_sell_l <= higher_sell_limit:
+                key = (lev, current_stop_l, current_sell_l)
+                strategies[key] = Strategy(stock_data, current_stop_l, lev, current_sell_l, "temp", invest)
+                current_sell_l += 0.03
+                counter += 1
+                
+            current_stop_l += 0.05
 
-read_csv()
-short_liquidated = count_liquidated("short")
-long_liquidated = count_liquidated("long")
-absolute_lost_count = count_lost()
-absolute_win_count = count_win()
-balance = round(get_balance(), 2)
-still_open = count_still_open()
-profit_from_sold = round(balance - invested, 2)
-money_lost = absolute_lost_count * 100
+    # Make the Pool of workers
+    pool = ThreadPool(12)
 
-for position in positions:
-    print(position)
+    # Open the URLs in their own threads
+    # and return the results
+    result = pool.map(evaluate_strategy, strategies.values())
 
-print(f"Number of Entries: {len(positions)}")
-# print(f"Short liquidated: {short_liquidated}")
-# print(f"Long liquidated: {long_liquidated}")
-print(f"Successful sold for profit: {absolute_win_count}")
-print(f"Both liquidated: {absolute_lost_count}")
-print(f"Still open: {still_open}\n")
+    # Close the pool and wait for the work to finish
+    pool.close()
+    pool.join()
 
-print(f"leverage: {positions[0].leverage}")
-print(f"Sell at 20%\n")
+    for strat in strategies.values():
+        print(strat)
 
-print(f"Entry amount per position: 50 $")
-print(f"Invested: {invested} $")
-print(f"Money lost: {money_lost}")
-print(f"Current balance {balance} $")
-print(f"Profit from sold positions: {profit_from_sold} $")
-print(f"Overal profit: {profit_from_sold / invested * 100} %")
+    print(find_best_strat(strategies.values()))
 
+def find_best_strat(strategies):
+    current_best = list(strategies)[0]
+    for strat in strategies:
+        if strat.balance >= current_best.balance:
+            current_best = strat
+    return current_best
+
+def print_file_path(path):
+    if path:
+        print("File path:", path)
+    else:
+        print("No file path provided.")
+
+if __name__ == "__main__":
+    main()

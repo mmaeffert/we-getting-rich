@@ -9,13 +9,14 @@ class Position:
     leverage = None
 
 
-    def __init__(self, entry, sell_limit, leverage, invest = 50.0):
+    def __init__(self, entry, sell_limit, leverage, invest = 50.0, stop_loss = 1):
         invest = invest - 1
         self.entry = entry
         self.limit = sell_limit
         self.leverage = leverage
-        self.short_dead = entry * (1 + 1 / leverage)
-        self.long_dead = entry * (1 - 1 / leverage)
+        self.stop_loss = stop_loss
+        self.short_dead = entry * (1 + (1 / leverage) * self.stop_loss)
+        self.long_dead = entry * (1 - (1 / leverage) * self.stop_loss)
         self.current_balance = invest * 2
         self.invest = invest
 
@@ -44,7 +45,6 @@ class Position:
 
     def sell(self, current):
         if(current >= self.entry * (1 + self.limit) and self.long_liquidated == False) or (current <= self.entry * (1 - self.limit) and self.short_liquidated == False):
-            print(f"sold for {self.invest * (1 + (self.limit * self.leverage))}")
             self.current_balance = self.invest * (1 + (self.limit * self.leverage))
             self.closed = True
             self.subtract_fee()
