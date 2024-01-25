@@ -30,6 +30,7 @@ class Strategy:
         self.profit_from_sold = round(self.balance - self.invested, 2)
         self.money_lost = self.absolute_lost_count * 100
         self.profit_in_percent = self.profit_from_sold / self.invested * 100
+        self.positions = []
 
     def get_performanc_result(self):
         if self.profit_from_sold == None:

@@ -47,7 +47,7 @@ def evaluate_strategy(strategy):
         print(f"{counter} / {no_strats} - {round(counter / no_strats * 100, 2)} %")
     strategy.evaluate_strategy()
 
-def calculate_all_strats(stock_data, invest=50, lower_leverage=2, higher_leverage=10, lower_stop_loss=0.1, higher_stop_loss=1, higher_sell_limit=0.7):
+def calculate_all_strats(stock_data, invest=50, lower_leverage=2, higher_leverage=90, lower_stop_loss=0.1, higher_stop_loss=1, higher_sell_limit=1):
     strategies = {}
     global no_strats
     no_strats = (higher_leverage - lower_leverage) * (higher_stop_loss - lower_stop_loss) * 20 * (higher_sell_limit - lower_stop_loss) * 50
@@ -76,8 +76,8 @@ def calculate_all_strats(stock_data, invest=50, lower_leverage=2, higher_leverag
     pool.close()
     pool.join()
 
-    for strat in strategies.values():
-        print(strat)
+    # for strat in strategies.values():
+    #     print(strat)
 
     print(find_best_strat(strategies.values()))
 
