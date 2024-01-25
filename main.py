@@ -4,7 +4,7 @@ import csv
 positions = []
 invested = 0
 
-def read_csv(file_path = "data.csv"):
+def read_csv(file_path = "ms.csv"):
     data = []
     with open(file_path, 'r', newline=None, encoding='utf-8') as csvfile:
         csv_reader = csv.reader(csvfile)
@@ -19,7 +19,7 @@ def add_position(price_now):
     invest = 50
     global invested
     invested = invested + invest * 2
-    positions.append(Position(price_now, 0.2, 10, invest))
+    positions.append(Position(price_now, 0.2, 100, invest))
     for position in positions:
         position.eval(price_now)
 
