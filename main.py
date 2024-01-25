@@ -19,7 +19,7 @@ def add_position(price_now):
     invest = 50
     global invested
     invested = invested + invest * 2
-    positions.append(Position(price_now, 0.2, 10, invest))
+    positions.append(Position(price_now, 0.66, 9, invest, 0.6))
     for position in positions:
         position.eval(price_now)
 
