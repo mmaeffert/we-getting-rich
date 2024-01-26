@@ -3,100 +3,65 @@ import csv
 
 positions = []
 invested = 0
+lev = 10
 
-def read_csv(file_path = "ms.csv"):
-    data = []
+def read_csv(file_path="data.csv"):
     with open(file_path, 'r', newline=None, encoding='utf-8') as csvfile:
         csv_reader = csv.reader(csvfile)
         for row in csv_reader:
-            # Strip double quotes from each element and append to the data list
-            opened = float(row[1].strip('"'))
-            closed = float(row[4].strip('"'))
-            add_position((opened + closed) / 2)
-    return data
+            average_price = (float(row[1].strip('"')) + float(row[4].strip('"'))) / 2
+            add_position(average_price)
 
 def add_position(price_now):
-    invest = 50
     global invested
-    invested = invested + invest * 2
-    positions.append(Position(price_now, 0.2, 100, invest))
+    invest_amount = 50
+    invested += invest_amount * 2
+    position = Position(price_now, lev, invest_amount)
+    # Pass the soft_liquidation_percentage here (10% for +10% soft liquidation)
+    position.soft_liquidation_percentage = 0.10
+    positions.append(position)
     for position in positions:
-        position.eval(price_now)
+        position.evaluate_position(price_now)
 
-def count_liquidated(mode):
-    count = 0
-    for position in positions:
-        if mode == "short" and position.short_liquidated:
-            count = count + 1
-        if mode == "long" and position.long_liquidated:
-            count = count + 1
-    return count
+def count_closed_positions():
+    return sum(1 for position in positions if position.is_closed)
 
-def count_lost():
-    count = 0
-    for position in positions:
-        if position.short_liquidated and position.long_liquidated:
-            count = count + 1
-    return count
+def count_positions_with_profit():
+    return sum(1 for position in positions if position.is_closed and position.current_balance > position.investment * 2)
 
-def count_win():
-    count = 0
-    for position in positions:
-        if position.long_liquidated == False and position.short_liquidated == True and position.closed:
-            count = count + 1
-        if position.long_liquidated == True and position.short_liquidated == False and position.closed:
-            count = count + 1
-    return count
+def count_positions_with_loss():
+    return sum(1 for position in positions if position.is_closed and position.current_balance <= position.investment * 2)
 
-def get_balance():
-    balance = 0
-    for position in positions:
-        balance = balance + position.current_balance
-    return balance
+def get_total_balance():
+    return sum(position.current_balance for position in positions)
 
-def get_balance_from_sold():
-    balance = 0
-    for position in positions:
-        if position.closed:
-            balance = balance + position.balance
-    return balance
+def count_still_open_positions():
+    return sum(1 for position in positions if not position.is_closed)
 
-def count_still_open():
-    count = 0
-    for position in positions:
-        if position.closed == False:
-            count = count + 1
-    return count
+def get_balance_from_closed_positions():
+    return sum(position.current_balance for position in positions if position.is_closed)
 
-
-
+# Run the simulation
 read_csv()
-short_liquidated = count_liquidated("short")
-long_liquidated = count_liquidated("long")
-absolute_lost_count = count_lost()
-absolute_win_count = count_win()
-balance = round(get_balance(), 2)
-still_open = count_still_open()
-profit_from_sold = round(balance - invested, 2)
-money_lost = absolute_lost_count * 100
 
-for position in positions:
-    print(position)
+# Calculate and display statistics
+total_positions = len(positions)
+closed_positions = count_closed_positions()
+positions_with_profit = count_positions_with_profit()
+positions_with_loss = count_positions_with_loss()
+balance = round(get_total_balance(), 2)
+still_open = count_still_open_positions()
+profit_from_sold = round(get_balance_from_closed_positions() - invested, 2)
 
-print(f"Number of Entries: {len(positions)}")
-# print(f"Short liquidated: {short_liquidated}")
-# print(f"Long liquidated: {long_liquidated}")
-print(f"Successful sold for profit: {absolute_win_count}")
-print(f"Both liquidated: {absolute_lost_count}")
-print(f"Still open: {still_open}\n")
-
-print(f"leverage: {positions[0].leverage}")
-print(f"Sell at 20%\n")
-
-print(f"Entry amount per position: 50 $")
-print(f"Invested: {invested} $")
-print(f"Money lost: {money_lost}")
-print(f"Current balance {balance} $")
-print(f"Profit from sold positions: {profit_from_sold} $")
-print(f"Overal profit: {profit_from_sold / invested * 100} %")
-
+# Output results
+print(f"Number of Entries: {total_positions}")
+print(f"Closed Positions: {closed_positions}")
+print(f"Positions with Profit: {positions_with_profit}")
+print(f"Positions with Loss: {positions_with_loss}")
+print(f"Positions Still Open: {still_open}")
+print(f"Leverage: {lev}")
+print(f"Entry Amount per Position: $50")
+print(f"Invested Total: ${invested}")
+print(f"Total Balance: ${balance}")
+print(f"Profit from Closed Positions: ${profit_from_sold}")
+print(f"Overall Profit Percentage: {profit_from_sold / invested * 100:.2f} %")
