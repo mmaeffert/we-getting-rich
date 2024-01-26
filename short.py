@@ -11,6 +11,8 @@ class Short(Position):
 
     # Updates the balance of the position
     def update_balance(self, current_price):
+
+        self.update_is_closed()
         
         # abort if position is closed
         if self.is_closed:
