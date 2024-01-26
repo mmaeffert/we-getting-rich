@@ -50,14 +50,22 @@ class Position:
     # Fee object to take into account when ever a transaction is executed
     fee = None
 
-    def __init__(self, entry_price, invest, leverage, stop_loss_decimal, sell_limit_decimal, fee):
+    def __init__(self, entry_price, invest, leverage, stop_loss_decimal, sell_limit_decimal, fee, type):
 
         self.entry_price = entry_price
         self.invest = invest
         self.leverage = leverage
         self.stop_loss_decimal = stop_loss_decimal
-        self. stop_loss_decimal = sell_limit_decimal
+        self.stop_loss_decimal = sell_limit_decimal
         self.fee = fee
+        self.is_closed = False
+        self.entry_price = entry_price
+        self.balance = invest
+
+        if type == "short" or type == "long":
+            self.type = type
+        else:
+            raise Exception(f"Type must be 'short' or 'long', given {type}")
 
     def update_is_closed(self):
 
