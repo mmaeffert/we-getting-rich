@@ -56,7 +56,7 @@ class Position:
         self.invest = invest
         self.leverage = leverage
         self.stop_loss_decimal = stop_loss_decimal
-        self.stop_loss_decimal = sell_limit_decimal
+        self.sell_limit_decimal = sell_limit_decimal
         self.fee = fee
         self.is_closed = False
         self.entry_price = entry_price
@@ -72,6 +72,10 @@ class Position:
         # Set is_closed when either liquidated, stop_loss_triggered or sold_at_sell_limit is true
         if self.sold_at_sell_limit or self.liquidated or self. stop_loss_triggered:
             self.is_closed = True
+
+    # sets the balance to a given value
+    def set_balance(self, balance):
+        self.balance = balance
 
     # returns a decimal percent value of current balance divided by invest
     def get_balance_pc(self):
