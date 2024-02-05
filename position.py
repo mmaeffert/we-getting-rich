@@ -41,7 +41,7 @@ class Position:
     # Bool whether a position has been liquidated
     liquidated = None
 
-    # Defines whether a position is closed, meaning sold for profit, stop loss triggered of liquidated
+    # Defines whether a position is closed, meaning sold for profit, stop loss triggered or liquidated
     is_closed = None
 
     # Defines the type of the Position with it being either "long" or "short"
@@ -58,14 +58,16 @@ class Position:
         self.stop_loss_decimal = stop_loss_decimal
         self.sell_limit_decimal = sell_limit_decimal
         self.fee = fee
-        self.is_closed = False
-        self.entry_price = entry_price
-        self.balance = invest
 
         if type == "short" or type == "long":
             self.type = type
         else:
             raise Exception(f"Type must be 'short' or 'long', given {type}")
+        
+        self.is_closed = False
+        self.balance = invest
+
+        
 
     def update_is_closed(self):
 
@@ -93,6 +95,3 @@ class Position:
     # Returns current balance in it's value - e.g. 50
     def get_balance_amt(self):
         return self.balance
-
-
-        
