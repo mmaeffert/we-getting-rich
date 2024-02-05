@@ -4,5 +4,9 @@ position.update_is_closed ✓
 
 edge cases for short.update_balance ✓
 
-set_balance
+set_balance ✓
+
+get balance pc ✓
+
+get balance amt ✓
 
